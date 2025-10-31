@@ -1,1 +1,61 @@
+# VS Code workspace settings
 ros2_ws.code-workspace
+.vscode/
+.cursorrules
+
+# ROS 2 build artifacts
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.project
+.cproject
+CMakeLists.txt.user
+qtcreator-*
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.bak
+*.tmp
+
+# ROS specific
+*.pcd
+msg_gen/
+srv_gen/
+msg/*Action.msg
+msg/*ActionFeedback.msg
+msg/*ActionGoal.msg
+msg/*ActionResult.msg
+msg/*Feedback.msg
+msg/*Goal.msg
+msg/*Result.msg
+
+# Generated documentation
+*.dox
+*.wikidoc
+
+# Catkin (ROS 1 legacy)
+.catkin_workspace
+.catkin_tools/
+build_isolated/
+devel_isolated/
+CATKIN_IGNORE

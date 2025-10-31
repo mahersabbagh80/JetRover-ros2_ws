@@ -1,0 +1,15 @@
+vision_node:
+  ros__parameters:
+    debug: false
+    target_color: 'red'  # Options: red, blue, green, yellow
+    min_area: 500  # Minimum contour area in pixels for valid detection
+    
+    # HSV color calibration (optional overrides)
+    # Format: [H_min, S_min, V_min, H_max, S_max, V_max]
+    # Hue: 0-180, Saturation: 0-255, Value: 0-255
+    
+    # Example for custom red range:
+    # red_lower_1: [0, 120, 70]
+    # red_upper_1: [10, 255, 255]
+    # red_lower_2: [170, 120, 70]
+    # red_upper_2: [180, 255, 255]

@@ -1,0 +1,38 @@
+pickup_node:
+  ros__parameters:
+    # Servo IDs (JetRover arm configuration)
+    servo_base: 6       # Base rotation servo
+    servo_shoulder: 5   # Shoulder joint
+    servo_elbow: 4      # Elbow joint
+    servo_wrist: 3      # Wrist joint
+    servo_gripper: 2    # Gripper servo
+    
+    # Movement timing
+    move_duration: 1000  # milliseconds for smooth movements
+    
+    # Calibrated positions (adjust these based on your robot)
+    # Position range: typically 0-1000 for bus servos
+    home_position:
+      base: 500
+      shoulder: 500
+      elbow: 500
+      wrist: 500
+      gripper: 500
+    
+    pickup_position:
+      base: 500
+      shoulder: 300
+      elbow: 700
+      wrist: 500
+      gripper: 300  # Open
+    
+    lift_position:
+      base: 500
+      shoulder: 500
+      elbow: 500
+      wrist: 500
+      gripper: 700  # Closed
+    
+    # Safety limits
+    min_position: 0
+    max_position: 1000
