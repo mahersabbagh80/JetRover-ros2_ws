@@ -15,7 +15,13 @@ setup(
                 "launch/bringup_robocollector_navigation.launch.py",
                 "launch/bringup_robocollector_localization.launch.py",
                 "launch/robocollector.launch.py",
+                "launch/simulation.launch.py",
+                "launch/gazebo_simulation.launch.py",
             ],
+        ),
+        (
+            "share/" + package_name + "/worlds",
+            ["worlds/robocollector.world"],
         ),
     ],
     install_requires=["setuptools"],

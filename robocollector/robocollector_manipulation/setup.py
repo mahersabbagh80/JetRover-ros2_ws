@@ -25,7 +25,8 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "pickup_node = robocollector_manipulation.pickup_node:main"
+            "pickup_node = robocollector_manipulation.pickup_node:main",
+            "mock_pickup_node = robocollector_manipulation.mock_pickup_node:main",
         ],
     },
 )

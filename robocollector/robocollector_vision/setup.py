@@ -24,6 +24,9 @@ setup(
         ],
     },
     entry_points={
-        "console_scripts": ["vision_node = robocollector_vision.vision_node:main"],
+        "console_scripts": [
+            "vision_node = robocollector_vision.vision_node:main",
+            "simulation_test_node = robocollector_vision.simulation_test_node:main",
+        ],
     },
 )

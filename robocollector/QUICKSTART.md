@@ -34,13 +34,45 @@ colcon build --packages-select robocollector_vision robocollector_manipulation r
 source install/setup.bash
 ```
 
-### 2. Launch the System
+### 2A. Test in Simulation FIRST (Recommended) 🎮
+
+**No hardware needed! Test the full logic locally:**
 
 ```bash
 # Set development environment
 export need_compile=False
 
-# Start all nodes
+# Launch simulation (fake camera + mock arm)
+ros2 launch robocollector_bringup simulation.launch.py
+```
+
+**In a new terminal:**
+
+```bash
+source ~/JetRover/ros2_ws/install/setup.bash
+
+# Start the mission
+ros2 service call /controller_node/enter std_srvs/srv/Trigger
+```
+
+**You'll see:**
+
+- OpenCV window with simulated block detection
+- State machine transitions in terminal
+- Mock arm movement logs
+- Full system validation without hardware!
+
+See **[SIMULATION_TESTING.md](SIMULATION_TESTING.md)** for complete guide.
+
+### 2B. Launch on Real Robot
+
+**After simulation testing passes:**
+
+```bash
+# Set development environment
+export need_compile=False
+
+# Start all nodes with real hardware
 ros2 launch robocollector_bringup robocollector.launch.py
 ```
 
