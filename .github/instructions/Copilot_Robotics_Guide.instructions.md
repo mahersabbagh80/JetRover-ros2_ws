@@ -88,6 +88,173 @@ Usage notes:
 
 ---
 
+## 🌐 Environment Variables
+
+- `need_compile`: Launch path toggle. `True` → use installed paths via `get_package_share_directory`; `False` → use source paths under `/home/ubuntu/ros2_ws/src/<package>` on the robot.
+- `RMW_IMPLEMENTATION`: DDS selection (e.g., `rmw_fastrtps_cpp`). Keep consistent across nodes.
+- `RCUTILS_LOGGING_BUFFERED_STREAM`: Set `1` to buffer logs; unset for immediate flush when debugging.
+- `CUDA_VISIBLE_DEVICES`: Limit GPU visibility on Jetson when benchmarking.
+
+---
+
+## 📡 Topic & QoS Conventions
+
+- Control/state topics: Reliable, keep last, small queue (e.g., `cmd_vel`, odom).
+- High-rate images/point clouds: BestEffort, larger queue, consider downscaling/ROI.
+- Naming: lowercase with slashes, e.g., `/camera/image_raw`, `/scan`, `/robocollector/targets`.
+- Parameters: snake_case keys with explicit units (e.g., `max_speed_mps`).
+
+---
+
+## 🔁 Node Lifecycle & Heartbeat
+
+- Required services per node: `~/enter`, `~/exit`, `~/init_finish`.
+- Protect shared resources with `threading.RLock()`; destroy pubs/subs/timers on exit with `None` checks.
+- Heartbeat pattern:
+```python
+from app.common import Heart
+Heart(self, self.get_name() + '/heartbeat', 5, lambda _: self.exit_srv_callback(None, type('R', (), {})()))
+```
+
+---
+
+## 🧭 TF Frames & Coordinates
+
+- Frames: `map` → `odom` → `base_link` → sensors (`camera_link`, `laser`).
+- Conventions: right-handed; meters; radians; timestamps synced; camera frame is optical by default if used for vision.
+
+---
+
+## 🧪 Simulation Guide
+
+- Use assets in `simulations/jetrover_description` (URDF, meshes, RViz).
+- Launch robot description + RViz first; add SLAM/nav nodes as needed.
+- Keep simulation parameters separate from hardware via launch `parameters=[...]`.
+
+---
+
+## ⚡ Jetson Performance Tuning
+
+- Vision ≤ 15 Hz; perception publishers ≤ 10 Hz.
+- Downscale images or use ROI to reduce copy/compute cost.
+- Prefer zero-copy paths and avoid unnecessary conversions.
+- Consider TensorRT engines for heavy models; pin CPU affinities only after measuring.
+
+---
+
+## 🧩 Interfaces Catalog
+
+- Messages: see `interfaces/msg` (e.g., `ObjectInfo`, `ColorInfo`, `Point2D`, `Pose2D`).
+- Services: see `interfaces/srv` (e.g., `SetString`, `SetPose2D`, `GetPose`).
+- Depend on `interfaces` in `package.xml` to publish/subscribe or call these types.
+
+---
+
+## 🛡️ Safety Checklist
+
+- E-stop reachable; torque-off or safe-stop command ready.
+- Battery thresholds monitored; log warnings.
+- Implement `~/exit` to tear down timers/subs and leave actuators safe.
+
+---
+
+## 🛠️ Troubleshooting Quick Fixes
+
+- Rebuild clean: `rm -rf build install log && colcon build --symlink-install`.
+- Resolve deps: `rosdep install --from-paths src -r -y` (if applicable).
+- DDS issues: ensure same `RMW_IMPLEMENTATION` for all nodes.
+- Inspect graph: `rqt_graph`, `ros2 node info`, `ros2 topic hz`.
+
+---
+
+## 📦 Git/LFS Hygiene
+
+- Large artifacts (models, engines): tracked by Git LFS (`*.pt`, `*.onnx`, `*.engine`, etc.).
+- Don’t commit build artifacts or data dumps; keep `.gitignore` current.
+- Write descriptive commit messages (scope: summary).
+
+---
+
+## 📋 Templates
+
+### ROS 2 Node Template (Python)
+
+```python
+import rclpy
+from rclpy.node import Node
+from std_srvs.srv import Trigger
+import threading
+
+class MyNode(Node):
+    def __init__(self):
+        super().__init__('my_node')
+        self.lock = threading.RLock()
+        self.create_service(Trigger, '~/enter', self.enter_srv_callback)
+        self.create_service(Trigger, '~/exit', self.exit_srv_callback)
+        self.create_service(Trigger, '~/init_finish', self.get_node_state)
+
+    def enter_srv_callback(self, req, res):
+        with self.lock:
+            # initialize pubs/subs/timers here
+            ...
+        res.success = True
+        return res
+
+    def exit_srv_callback(self, req, res):
+        try:
+            # destroy pubs/subs/timers with None checks
+            ...
+        except Exception as e:
+            self.get_logger().error(str(e))
+        res.success = True
+        return res
+
+    def get_node_state(self, req, res):
+        res.success = True
+        return res
+
+def main():
+    rclpy.init()
+    node = MyNode()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+### Launch File Template (Python)
+
+```python
+import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import OpaqueFunction, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.actions import Node
+
+def launch_setup(context):
+    compiled = os.environ.get('need_compile', 'True')
+    if compiled == 'True':
+        package_path = get_package_share_directory('package_name')
+    else:
+        package_path = '/home/ubuntu/ros2_ws/src/package_name'
+
+    dependency_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(package_path, 'launch/dependency.launch.py'))
+    )
+    node = Node(
+        package='package_name',
+        executable='node_executable',
+        output='screen',
+        parameters=[{'debug': False}],
+    )
+    return [dependency_launch, node]
+
+def generate_launch_description():
+    return LaunchDescription([OpaqueFunction(function=launch_setup)])
+```
+
+---
+
 ## ⚙️ Instructions for Copilot
 
 ### 1️⃣ General Behavior
@@ -203,6 +370,9 @@ Copilot should:
   - `rqt_graph`
 - Suggest **GoogleTest** for C++ nodes when appropriate.
 
+- Python tests: place under each package's `test/` and use `pytest` style.
+- Run tests via `colcon test` and inspect with `colcon test-result --all`.
+
 ---
 
 ### 8️⃣ Deployment Workflow
@@ -217,6 +387,10 @@ Copilot should:
    ros2 launch <package> <launch_file>.launch.py
    ```
 4. Monitor system logs via `rqt_graph`, `ros2 topic echo`, or `ros2 node list`.
+
+Notes:
+- `build/`, `install/`, and `log/` are created in the workspace root on first build.
+- Source the overlay in each new shell before running: `source install/setup.bash`.
 
 ---
 

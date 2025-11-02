@@ -49,26 +49,28 @@ This project serves as a hands-on introduction to the integration of **ROS 2**,
 
 ---
 
-## Suggested Project Structure
+## Project Structure
 
 ```
-JetRover_Project/
-├── src/
-│   ├── robocollector_navigation/      # Navigation nodes (SLAM, path planning)
-│   ├── robocollector_vision/          # Color detection and block localization
-│   ├── robocollector_manipulator/     # Arm control and pickup logic
-│   ├── robocollector_controller/      # Central node to coordinate all modules
-│   └── robocollector_msgs/            # Custom ROS2 message definitions
-├── launch/
-│   ├── robocollector_bringup.launch.py
-│   └── simulation.launch.py
-├── config/
-│   ├── nav_params.yaml
-│   └── vision_params.yaml
-├── docs/
-│   ├── Copilot_Robotics_Guide.md
-│   └── JetRover_robocollector_Instructions.md
-└── README.md
+ros2_ws/
+└── robocollector/
+    ├── robocollector_bringup/         # Launch orchestration, worlds
+    │   ├── launch/
+    │   └── worlds/
+    ├── robocollector_controller/      # Coordinator node(s)
+    │   └── launch/
+    ├── robocollector_navigation/      # Nav stack wrappers (SLAM, planning)
+    │   ├── src/
+    │   ├── config/
+    │   └── launch/
+    ├── robocollector_vision/          # Perception and color detection
+    │   ├── robocollector_vision/
+    │   ├── config/
+    │   └── launch/
+    └── robocollector_manipulation/    # Arm control and pickup sequences
+        ├── robocollector_manipulation/
+        ├── config/
+        └── launch/
 ```
 
 ---

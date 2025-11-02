@@ -64,7 +64,6 @@ RoboCollector focus
 - Future: sorting, speech, dashboard, sim/RL
 
 References
-- Detailed rules: `/.github/copilot-instructions.md`
 - Robotics guide: `/.github/instructions/Copilot_Robotics_Guide.instructions.md`
 - Project stages: `/.github/instructions/JetRover_RoboCollector.instructions.md`
 
