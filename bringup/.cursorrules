@@ -1,0 +1,3 @@
+- All launch files must implement the `need_compile` environment toggle to pick source vs installed paths.
+- Prefer hierarchical includes with parameter passing and conditional nodes.
+

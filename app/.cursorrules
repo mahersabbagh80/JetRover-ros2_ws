@@ -1,0 +1,6 @@
+- Enforce `~/enter`, `~/exit`, `~/init_finish` services on all nodes.
+- Use `threading.RLock()` for any shared resource.
+- Destroy subs/pubs/timers in `exit` with None-checks.
+- Vision nodes: cap processing ≤ 15 Hz; publish results ≤ 10 Hz; prefer BestEffort image QoS.
+- `debug` parameter must gate any OpenCV `imshow`.
+

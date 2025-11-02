@@ -61,6 +61,33 @@ This ensures that heavy development happens locally, while the Jetson executes o
 
 ---
 
+## 🗂️ Workspace Overview (Repo-level)
+
+This repository hosts a ROS 2 workspace at `~/JetRover/ros2_ws`. Below is a guide to each top‑level folder (excluding `robocollector/`) and how they’re intended to be reused across RoboCollector and future JetRover projects.
+
+- **app**: Reusable application utilities and demo nodes. Includes helpers like `app.common.Heart` for heartbeat supervision and common app patterns (lifecycle services `~/enter`, `~/exit`, `~/init_finish`).
+- **bringup**: Shared bringup launch files and scripts to start subsystems. Prefer including these launches from project‑specific bringup packages and pass parameters. Follow the `need_compile` environment toggle pattern for resolving runtime paths.
+- **calibration**: Camera/IMU/servo calibration nodes, parameters, and launches. Run these first to establish sensor intrinsics/extrinsics and servo offsets before navigation/manipulation.
+- **driver**: Low‑level hardware interfaces (SDK, servo/robot controllers, kinematics) and related message packages. Change only when hardware behavior or protocols require updates.
+- **example**: Self‑contained examples demonstrating patterns and APIs (QoS, lifecycle, node templates). Good starting points for new modules.
+- **interfaces**: Shared ROS 2 messages and services. Msgs like `ObjectInfo`, `ColorInfo`, `Point2D`, `Pose2D`; srvs like `SetString`, `SetPose2D`, `GetPose`. Depend on this in `package.xml` when publishing/consuming these interfaces.
+- **large_models**: Integrations for heavier ML models (vision/LMM). Use carefully on Jetson: prefer downscaled inputs/ROIs and lower publish rates.
+- **large_models_examples**: Example nodes and configs demonstrating `large_models` usage.
+- **navigation**: Navigation stack wrappers, configs, and RViz setups. Used for path planning/control; typically launched after SLAM or with a prebuilt map.
+- **peripherals**: Sensor/device bringup (camera, LiDAR, auxiliary hardware), RViz configs, and scripts. Match QoS to consumers (BestEffort for high‑rate images, Reliable for control topics).
+- **simulations**: Robot description and simulation assets (URDF, meshes, launch, RViz). Use for simulation‑first development and CI smoke tests.
+- **slam**: SLAM packages, configs, maps, and launch files. Use to build/save maps and for localization during autonomous runs.
+- **xf_mic_asr_offline** and **xf_mic_asr_offline_msgs**: Optional offline speech recognition stack and its interfaces. Useful for voice commands; can be disabled via `COLCON_IGNORE` if unneeded.
+- **build**, **install**, **log**: `colcon` outputs. Do not edit; clean when needed for fresh builds.
+- **ros2_ws.code-workspace**: Editor workspace configuration (IDE convenience), not part of build.
+
+Usage notes:
+- Prefer including launches from `bringup/` with project‑specific parameters over duplicating logic.
+- Honor the environment toggle in launch files: set `need_compile=True` to use installed paths via `get_package_share_directory`, and `need_compile=False` to resolve source paths under `/home/ubuntu/ros2_ws/src/<package>` on the robot.
+- Follow required node patterns: expose `~/enter`, `~/exit`, `~/init_finish`; guard shared resources with `threading.RLock()`; destroy pubs/subs/timers on exit with `None` checks.
+
+---
+
 ## ⚙️ Instructions for Copilot
 
 ### 1️⃣ General Behavior

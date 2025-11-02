@@ -1,7 +1,6 @@
 # VS Code workspace settings
 ros2_ws.code-workspace
 .vscode/
-.cursorrules
 
 # ROS 2 build artifacts
 build/
@@ -16,6 +15,16 @@ __pycache__/
 *.egg
 *.egg-info/
 dist/
+
+# Virtual environments and caches
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # IDE
 .idea/

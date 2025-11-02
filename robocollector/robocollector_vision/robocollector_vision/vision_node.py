@@ -126,7 +126,17 @@ class VisionNode(Node):
                 cv2.imshow(
                     "Color Detection", cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR)
                 )
-                cv2.waitKey(1)
+                key = cv2.waitKey(1)
+
+                # Check if window was closed or 'q' pressed
+                if (
+                    key == ord("q")
+                    or cv2.getWindowProperty("Color Detection", cv2.WND_PROP_VISIBLE)
+                    < 1
+                ):
+                    self.get_logger().warn("Debug window closed - disabling debug mode")
+                    self.debug = False
+                    cv2.destroyAllWindows()
 
             # Publish result image
             if self.result_pub is not None:
@@ -209,6 +219,8 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
+        # Clean up OpenCV windows
+        cv2.destroyAllWindows()
         node.destroy_node()
         rclpy.shutdown()
 

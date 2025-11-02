@@ -1,0 +1,151 @@
+Project: JetRover RoboCollector
+
+Description
+JetRover autonomously explores, detects colored blocks, picks them, and delivers to “home”, integrating SLAM, perception, and manipulation on ROS 2 Humble.
+
+Scope & Precedence
+- This file applies repo-wide. Subfolder `.cursorrules` override for files within those folders.
+- Use these rules by default; more detailed guidance lives in `/.github/instructions/`.
+
+Context
+- Workspace: `~/JetRover/ros2_ws`
+- Robot: Hiwonder JetRover (mecanum), RGB-D, 2D LiDAR, arm
+- Dev: WSL2; Run: Jetson Orin Nano
+
+Architecture
+- Packages: `bringup/`, `app/`, `driver/`, `peripherals/`, `navigation/`, `interfaces/`, `large_models/`
+- App node services: `~/enter`, `~/exit`, `~/init_finish`
+- Heartbeat: `app.common.Heart(...)`
+
+Build & Run
+- Local: `colcon build --symlink-install && source install/setup.bash`
+- Robot: `ssh ubuntu@192.168.2.101 && cd ~/ros2_ws && git pull && colcon build --symlink-install`
+- Launch: hierarchical includes, parameters, and conditionals
+
+Environment toggle (need_compile)
+- Launch files must use:
+  - `need_compile=True` → installed path via `get_package_share_directory`
+  - `need_compile=False` → source path `/home/ubuntu/ros2_ws/src/<package>`
+
+Interfaces
+- msgs: `ObjectInfo`, `ColorInfo`, `Point2D`, `Pose2D`
+- srvs: `SetString`, `SetPose2D`, `GetPose`
+
+Node patterns (required)
+- Implement `enter/exit/init_finish`
+- Use `threading.RLock()` for shared resources
+- On exit: destroy subs/pubs/timers; None-checks required
+
+Performance & QoS
+- Default rates: vision ≤ 15 Hz, perception pub ≤ 10 Hz on Jetson
+- Prefer sensor data QoS: Reliable for control, BestEffort for high-rate images
+- Downscale/ROI for CV on Jetson; avoid expensive copies
+
+Logging & Monitoring
+- Logging: `self.get_logger().info(...)` with concise, colored status
+- Tools: `ros2 node list`, `ros2 service list`, `ros2 topic echo`, `ros2 bag record -a`, `rqt_graph`, `rviz2`
+- Perf: `htop`, `nvidia-smi`, `rqt_top`, `ros2 topic hz`
+
+Conventions
+- Python 3.10+ (PEP8); C++17–20 (RAII, smart pointers, const correctness)
+- ROS 2 Humble (`rclpy`/`rclcpp`), launch files for orchestration
+- Prefer async callbacks for multi-sensor
+- OpenCV for vision; NumPy/Eigen for math
+- No wildcard imports
+
+Testing
+- Vision nodes: `debug` param shows OpenCV windows
+- Service-based testing for lifecycle/config
+- Add pytest/launch tests; GoogleTest for C++ when applicable
+
+RoboCollector focus
+- Stages: setup → SLAM/nav → color detection → arm pickup → return/place → integration
+- Structure: `robocollector_*` for nav/vision/manipulator/controller/msgs
+- Future: sorting, speech, dashboard, sim/RL
+
+References
+- Detailed rules: `/.github/copilot-instructions.md`
+- Robotics guide: `/.github/instructions/Copilot_Robotics_Guide.instructions.md`
+- Project stages: `/.github/instructions/JetRover_RoboCollector.instructions.md`
+
+Enforced patterns (ready-to-copy)
+- Always apply these templates when creating or modifying nodes/launch files.
+
+```python
+# Launch environment toggle (Python)
+import os
+from ament_index_python.packages import get_package_share_directory
+
+compiled = os.environ.get('need_compile', 'True')
+if compiled == 'True':
+    package_path = get_package_share_directory('package_name')
+else:
+    package_path = '/home/ubuntu/ros2_ws/src/package_name'
+```
+
+```python
+# App node lifecycle + threading + logging (Python, rclpy)
+from std_srvs.srv import Trigger
+import threading
+
+self.lock = threading.RLock()
+self.create_service(Trigger, '~/enter', self.enter_srv_callback)
+self.create_service(Trigger, '~/exit', self.exit_srv_callback)
+self.create_service(Trigger, '~/init_finish', self.get_node_state)
+
+def enter_srv_callback(self, req, res):
+    self.get_logger().info('\033[1;32m%s\033[0m' % 'app enter')
+    with self.lock:
+        if getattr(self, 'image_sub', None) is None:
+            self.image_sub = self.create_subscription(..., callback=self.image_callback, qos_profile=...)
+    res.success = True
+    return res
+
+def exit_srv_callback(self, req, res):
+    self.get_logger().info('\033[1;32m%s\033[0m' % 'app exit')
+    try:
+        if getattr(self, 'image_sub', None) is not None:
+            self.destroy_subscription(self.image_sub)
+            self.image_sub = None
+        if getattr(self, 'timer', None) is not None:
+            self.destroy_timer(self.timer)
+            self.timer = None
+    except Exception as e:
+        self.get_logger().error('\033[1;31m%s\033[0m' % str(e))
+    res.success = True
+    return res
+
+def get_node_state(self, req, res):
+    res.success = True
+    return res
+```
+
+```python
+# Heartbeat pattern (Python)
+from app.common import Heart
+Heart(self, self.get_name() + '/heartbeat', 5, lambda _: self.exit_srv_callback(None, type('R', (), {})()))
+```
+
+```python
+# Launch structure with includes + params (Python)
+from launch import LaunchDescription
+from launch.actions import OpaqueFunction, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.actions import Node
+
+def launch_setup(context):
+    # set package_path using need_compile pattern above...
+    dependency_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(package_path, 'launch/dependency.launch.py'))
+    )
+    node = Node(
+        package='package_name',
+        executable='node_executable',
+        output='screen',
+        parameters=[{'debug': False}],
+    )
+    return [dependency_launch, node]
+
+def generate_launch_description():
+    return LaunchDescription([OpaqueFunction(function=launch_setup)])
+```

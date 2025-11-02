@@ -118,3 +118,8 @@ JetRover_Project/
 **Author:** Maher Alshirazi Alsabbagh  
 **Date:** October 2025  
 **Complementary File:** `Copilot_Robotics_Guide.md`
+
+---
+
+> Note: For a repository‑wide folder reference, see the “Workspace Overview (Repo‑level)” section in `Copilot_Robotics_Guide.instructions.md`.
+

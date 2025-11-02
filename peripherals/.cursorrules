@@ -1,0 +1,3 @@
+- Sensor streams: prefer BestEffort for high-rate image topics, Reliable for control/low-rate topics.
+- Avoid unnecessary copies; use ROI/downscale on Jetson.
+
